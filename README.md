@@ -78,7 +78,7 @@ export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9
 
 - To output credentials in json format for the specified profile:
 ```commandline
-$ nawsso --profile myprofile --export shell
+$ nawsso --profile myprofile --export json
 {
   "expiration": 1637612752000,
   "accessKeyId": "ASIATB2AVIHW7HQE37KX",
