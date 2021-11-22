@@ -46,7 +46,7 @@ $ nawsso --profile myprofile --export dotenv
 NAWSSO_AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 AWS_SECRET_ACCESS_KEY=ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK
-AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9Fzhh2jlbV7+lQRJ...
+AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9FzQRJ...
 ```
 
 - To output credentials in shell format for the specified profile:
@@ -55,7 +55,7 @@ $ nawsso --profile myprofile --export dotenv
 export NAWSSO_AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 export AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 export AWS_SECRET_ACCESS_KEY=ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK
-export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9Fzhh2jlbV7+lQRJ...
+export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9FzQRJ...
 ```
 - To output credentials in dotenv format and write them to a file:
 ```commandline
