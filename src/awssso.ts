@@ -76,15 +76,15 @@ class AwsSso {
     return Object.keys(this._profiles).map(x => this._profiles[x].name)
   }
 
-  public async getCredentials (): Promise<RoleCredential> {
+  public async getCredentials (profile: Profile): Promise<RoleCredential> {
     this._session = isExpired(this._session.expiresAt)
       ? await login(this._profile, true)
       : this._session
-    const sso = new SSOClient({ region: this._profile.sso_region })
+    const sso = new SSOClient({ region: profile.sso_region })
     const cmd = new GetRoleCredentialsCommand({
       accessToken: this._session.accessToken,
-      accountId: this._profile.sso_account_id,
-      roleName: this._profile.sso_role_name
+      accountId: profile.sso_account_id,
+      roleName: profile.sso_role_name
     })
     const result = await sso.send(cmd)
     if (
@@ -95,21 +95,23 @@ class AwsSso {
     ) {
       throw new Error('Unable to fetch role credentials with AWS SDK')
     }
-    return result.roleCredentials as RoleCredential
+    return {...result.roleCredentials, region: profile.region} as RoleCredential
   }
 
   public async updateCredentials (): Promise<void> {
     const config = await loadCredentials()
     for (const profileName in this._profiles) {
       const currentProfile = this._profiles[profileName]
-      const credentials = await this.getCredentials()
+      const credentials = await this.getCredentials(currentProfile)
       config[currentProfile.name] = {
-        region: currentProfile.region,
         aws_access_key_id: credentials.accessKeyId,
         aws_secret_access_key: credentials.secretAccessKey,
         aws_session_token: credentials.sessionToken,
         aws_security_token: credentials.sessionToken,
         aws_session_expiration: expirationToUTCDateTimeString(credentials.expiration)
+      }
+      if (credentials.region != null) {
+        config[currentProfile.name].region = credentials.region
       }
     }
     await createBackup()
@@ -117,13 +119,14 @@ class AwsSso {
   }
   
   public async exportCredentials (format: string): Promise<string> {
-    const credentials = await this.getCredentials()
+    const credentials = await this.getCredentials(this._profile)
     const prefix = format === 'shell' ? 'export ' : ''
     const nawssoMarker = `${prefix}NAWSSO_AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}\n`
+    const region = (credentials.region != null) ? `${prefix}AWS_REGION=${credentials.region}\n` : ''
     const token = `${prefix}AWS_SESSION_TOKEN=${credentials.sessionToken}`
-    return nawssoMarker + key + secret + token
+    return nawssoMarker + key + secret + region + token
   }
 }
 

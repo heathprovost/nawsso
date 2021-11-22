@@ -7,7 +7,7 @@ interface ParsedConfig<T> {
 interface Profile {
   name: string
   output: string
-  region: string
+  region?: string
   sso_account_id: string
   sso_region: string
   sso_role_name: string
@@ -32,6 +32,7 @@ interface RoleCredential extends RoleCredentials {
   secretAccessKey: string
   sessionToken: string
   expiration: number
+  region: string
 }
   
 interface LoginSession {
