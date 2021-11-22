@@ -22,7 +22,7 @@ $ nawsso
 Synchronized credentials for 5 profile(s)
 ```
 
-- To sync all credentials for the specified starturl (required when you have multiple SSO setups):
+- To sync all credentials for the specified starturl (only required when you have multiple SSO setups):
 ```commandline
 $ nawsso --starturl https://myendpoint.awsapps.com/start
 Synchronized credentials for 3 profile(s)
