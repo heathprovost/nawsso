@@ -5,7 +5,7 @@ Node AWS SSO Credentials Helper - sync up AWS CLI v2 SSO login session to legacy
 
 ## Prerequisite
 
-- Required `Node >= 14.0`
+- Required `Node >= 16`
 - Required [AWS CLI v2](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 - Assume you have already setup [AWS SSO](https://aws.amazon.com/single-sign-on/) for your organization
 
