@@ -20,8 +20,8 @@ class NawSso extends Command {
     export: flags.string({
       char: 'e',
       dependsOn: ['profile'],
-      options: ['dotenv', 'shell'],
-      description: 'Print out credentials as ENV variables in specified format'
+      options: ['dotenv', 'json', 'shell'],
+      description: 'Print out credentials in specified format'
     }),
     force: flags.boolean({
       char: 'f',

@@ -52,14 +52,14 @@ Synchronized credentials for 5 profile(s)
 
 ## Exporting Credentials
 
-Sometimes instead of syncing your credentials you need to capture them to be used elsewhere. You can use the `--export`
+Sometimes instead of syncing your credentials you need to capture them to be used elsewhere. You can use the `export`
 flag for this. Note that when run this way you must specify a profile and your credentials are not synced back to your 
 aws credentials file, they are only captured for output.
 
 - To output credentials in dotenv format for the specified profile:
 ```commandline
 $ nawsso --profile myprofile --export dotenv
-NAWSSO_AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
+NAWSSO_EXPIRES=1637612752000
 AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 AWS_SECRET_ACCESS_KEY=ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK
 AWS_REGION=us-east-1
@@ -69,11 +69,23 @@ AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcC
 - To output credentials in shell format for the specified profile:
 ```commandline
 $ nawsso --profile myprofile --export shell
-export NAWSSO_AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
+export NAWSSO_EXPIRES=1637612752000
 export AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 export AWS_SECRET_ACCESS_KEY=ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK
 export AWS_REGION=us-east-1
 export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9FzQRJ...
+```
+
+- To output credentials in json format for the specified profile:
+```commandline
+$ nawsso --profile myprofile --export shell
+{
+  "expiration": 1637612752000,
+  "accessKeyId": "ASIATB2AVIHW7HQE37KX",
+  "secretAccessKey": "ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK",
+  "region": "us-east-1",
+  "sessionToken": "IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9FzQRJ..."
+}
 ```
 
 - To output credentials in dotenv format and write them to a file:
@@ -81,6 +93,7 @@ export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9
 $ nawsso --profile myprofile --export dotenv > .env.myprofile
 ```
 
-Note: An extra variable named `NAWSSO_AWS_ACCESS_KEY_ID` is also generated. This can optionally be used to perform sanity checks to confirm the 
-origin of the AWS variables in whatever environment you use them in. When `NAWSSO_AWS_ACCESS_KEY_ID === AWS_ACCESS_KEY_ID` you can be confident 
-that all of the AWS variables were generated together by nawsso.
+Note: The variable `NAWSSO_EXPIRES/expiration` is the datetime at which the session token will expire in. 
+It is encoded as the number of milliseconds since the Unix Epoch. This can optionally be used to perform 
+sanity checks to confirm that the token is still valid in whatever environment you use the credentials
+in.

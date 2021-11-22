@@ -120,13 +120,22 @@ class AwsSso {
   
   public async exportCredentials (format: string): Promise<string> {
     const credentials = await this.getCredentials(this._profile)
+    if (format === 'json') {
+      return JSON.stringify({
+        expiration: credentials.expiration,
+        accesKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+        region: credentials.region,
+        sessionToken: credentials.sessionToken
+      }, null, 2)
+    }
     const prefix = format === 'shell' ? 'export ' : ''
-    const nawssoMarker = `${prefix}NAWSSO_AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
+    const nawssoExpires = `${prefix}NAWSSO_EXPIRES=${credentials.expiration}\n`
     const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}\n`
     const region = (credentials.region != null) ? `${prefix}AWS_REGION=${credentials.region}\n` : ''
     const token = `${prefix}AWS_SESSION_TOKEN=${credentials.sessionToken}`
-    return nawssoMarker + key + secret + region + token
+    return nawssoExpires + key + secret + region + token
   }
 }
 
