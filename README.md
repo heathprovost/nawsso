@@ -93,7 +93,7 @@ $ nawsso --profile myprofile --export json
 $ nawsso --profile myprofile --export dotenv > .env.myprofile
 ```
 
-Note: The variable `NAWSSO_EXPIRES/expiration` is the datetime at which the session token will expire in. 
+Note: The variable `NAWSSO_EXPIRES/expiration` is the datetime at which the session token will expire. 
 It is encoded as the number of milliseconds since the Unix Epoch. This can optionally be used to perform 
 sanity checks to confirm that the token is still valid in whatever environment you use the credentials
 in.
