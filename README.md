@@ -18,18 +18,18 @@ $ npm install -g nawsso
 
 - If you only have one AWS SSO setup you can login without any parameters and sync all configured profiles:
 ```commandline
-$ nawsso login
+$ nawsso
 Synchronized credentials for 5 profile(s)
 ```
 
 - To login and sync all credentials for the specified starturl (when you have multiple SSL setups):
 ```commandline
-$ nawsso login --starturl https://myendpoint.awsapps.com/start
+$ nawsso --starturl https://myendpoint.awsapps.com/start
 Synchronized credentials for 3 profile(s)
 ```
 
 - To login and sync only a single profile:
 ```commandline
-$ nawsso login --profile myprofile
+$ nawsso --profile myprofile
 Synchronized credentials for profile 'myprofile'
 ```
