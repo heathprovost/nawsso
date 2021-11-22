@@ -13,7 +13,7 @@ Node AWS SSO Credentials Helper - sync up AWS CLI v2 SSO login session to legacy
 
 - Install using npm:
 ```commandline
-$ npm install -g nawsso
+$ npm install -g @heathprovst/nawsso
 ```
 
 - If you only have one AWS SSO setup you can sync all configured profiles without providing any parameters:
