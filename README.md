@@ -57,3 +57,11 @@ export AWS_ACCESS_KEY_ID=ASIATB2AVIHW7HQE37KX
 export AWS_SECRET_ACCESS_KEY=ZhSic9j0fTLlzx0k4y8OEiPBUH/Dms3B6Znku1LK
 export AWS_SESSION_TOKEN=IQoJb3JpZ2luX2VjEFsaCXVzLWVhc3QtMiJHMEUCIQDVPbpc8eUv2U9vEJuNcCtZn0sM/9Fzhh2jlbV7+lQRJQIgU+M9ivQcoOzYAjTkthXASOFOnlJlsazUbWtcsvddyVUqkwMIJBAEGgwyMTAwNTIxMzc0NTMiDCIURPIsWB4h/1ga0irwAnOHPIwj8fk5s9wU868DrvnE8g4jmpbUD7SiOCfNyNN9M7nec1wQHTMe5aDQ9T997PQhtlYaPSnglaz8ERb2KlCUsqLnMz47aV9VqWwtaRkZKI+d1DeOCUKn7zdy6pFDqqnPMAdXtqFpn8+hHNjaAQWncfE9TTlpGsQ49TR67/CaTXaj1ss1j9kfnyL/c2qhQtjCdu3TVBEv5FUl903e6vr658Ep/ejnxrQrCpVMvgDE5WjEFvMkuWE3bxrCckiAOsEAgWKK/PfsxPKrfc1Jyr9b7hJE/ZvOdJb0QvzjxNfSMCUHi2yKSC9NxmbtDPNAKYBXm4RdJp24hm6hLY2ok25yf+NXJyOE6DPhzeXxGUvvvnVdDVy3wojzv24D3S2RbrWdEAetCet5kxSSomDQW70Z78GTxKuLgraWAH/dsTxsunf4u/pRTvr/6Ccju5J25dFO3TgQgAe9V5BV4hEz94CwqpmBJgyD7KGwvdpd3uFiMKGX7IwGOqYBrAdDIi+rjpw/ms0w8iRhc1oIwfX4wErLtygBftaNIhOIrCG0IHTtnzFgqisTiHlJHmaop22h85Lxc/GkPVLGvZzri/woVHENNdNNDa6J8DvaFQijWl93cDneoRDcm/apEqJz1MmM1XVcCNj/eeS8lcS+ZJb3jpI2hdM85L8QBv4fTosQbYwXZeiCjwBUzklgDaRwWGNKhC8t433MPmXqoFjNqVx7Ag==
 ```
+- To output credentials in dotenv format and write them to a file:
+```commandline
+$ nawsso --profile myprofile --export dotenv > .env.myprofile
+```
+
+Note: An extra variable named `NAWSSO_AWS_ACCESS_KEY_ID` is also generated. This can optionally be used to perform sanity checks to confirm the 
+origin of the AWS variables in whatever environment you use them in. When `NAWSSO_AWS_ACCESS_KEY_ID === AWS_ACCESS_KEY_ID` you can be confident 
+that all of the AWS variables were generated together by nawsso.

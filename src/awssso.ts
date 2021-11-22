@@ -122,7 +122,7 @@ class AwsSso {
     const nawssoMarker = `${prefix}NAWSSO_AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}\n`
-    const token = `${prefix}AWS_SESSION_TOKEN=${credentials.sessionToken}\n`
+    const token = `${prefix}AWS_SESSION_TOKEN=${credentials.sessionToken}`
     return nawssoMarker + key + secret + token
   }
 }
