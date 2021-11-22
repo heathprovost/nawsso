@@ -3,7 +3,12 @@
   "version": "1.0.9",
   "description": "Node AWS SSO Credentials Helper",
   "author": "Heath Provost <galvanash@gmail.com>",
+  "homepage": "https://github.com/heathprovost/nawsso",
+  "repository": "github:heathprovost/nawsso",
   "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
   "bin": {
     "nawsso": "./bin/run"
   },
