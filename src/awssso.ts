@@ -116,9 +116,9 @@ class AwsSso {
     await saveCredentials(config)
   }
   
-  public async exportCredentials (format: 'dotenv' | 'export'): Promise<string> {
+  public async exportCredentials (format: string): Promise<string> {
     const credentials = await this.getCredentials()
-    const prefix = format === 'export' ? 'export ' : ''
+    const prefix = format === 'shell' ? 'export ' : ''
     const nawssoMarker = `${prefix}NAWSSO_AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
     const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}\n`

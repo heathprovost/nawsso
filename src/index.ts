@@ -2,7 +2,7 @@ import {Command, flags} from '@oclif/command'
 import { AwsSso } from './awssso'
 
 class NawSso extends Command {
-  static description = 'Node AWS SSO Credentials Helper\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.Invoke aws sso login and sync profile(s)'
+  static description = 'Node AWS SSO Credentials Helper\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
   static flags = {
     help: flags.help({
       char: 'h'
@@ -17,29 +17,23 @@ class NawSso extends Command {
       exclusive: ['starturl'],
       description: 'Login profile name. Default behavior is to sync all SSO profiles'
     }),
-    export: flags.boolean({
+    export: flags.string({
       char: 'e',
       dependsOn: ['profile'],
-      exclusive: ['dotenv'],
-      description: 'Print out AWS ENV vars in shell export format'
-    }),
-    dotenv: flags.boolean({
-      char: 'd',
-      dependsOn: ['profile'],
-      exclusive: ['export'],
-      description: 'Print out AWS ENV vars in .env format'
+      options: ['dotenv', 'shell'],
+      description: 'Print out credentials as ENV variables in specified format'
     }),
     force: flags.boolean({
       char: 'f',
-      description: 'Force new session even when existing session is still valid'
+      description: 'Force login even when existing session is still valid'
     }),
   }
 
   async run() {
     const {flags} = this.parse(NawSso)
     const sso = await AwsSso.fromProfileNameOrStartUrl(flags.starturl ?? flags.profile, flags.force)
-    if (flags.dotenv || flags.export) {
-      this.log(await sso.exportCredentials(flags.export ? 'export' : 'dotenv'))
+    if (flags.export) {
+      this.log(await sso.exportCredentials(flags.export))
     } else if (flags.profile) {
       await sso.updateCredentials()
       this.log(`Synchronized credentials for profile '${flags.profile}'`)
