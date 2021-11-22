@@ -34,6 +34,21 @@ $ nawsso --profile myprofile
 Synchronized credentials for profile 'myprofile'
 ```
 
+- To force a new login session, even when the existing session is still valid
+```commandline
+$ nawsso --force
+Attempting to automatically open the SSO authorization page in your default browser.
+If the browser does not open or you wish to use a different device to authorize this request, open the following URL:
+
+https://device.sso.us-east-2.amazonaws.com/
+
+Then enter the code:
+
+NSKQ-XJWP
+Successully logged into Start URL: https://myendpoint.awsapps.com/start#/
+Synchronized credentials for 5 profile(s)
+```
+
 ## Exporting Credentials
 
 Sometimes instead of syncing your credentials you need to capture them to be used elsewhere. You can use the `--export`
