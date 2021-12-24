@@ -4,11 +4,20 @@ import { existsSync, mkdirSync } from 'fs'
 import { readFile, writeFile, copyFile, readdir } from 'fs/promises'
 import * as spawn from 'await-spawn'
 import { parse, encode } from 'ini'
-import { ParsedConfig, Profile, UnnamedProfile, LoginSession, Credential } from './interfaces'
+import { ParsedConfig, Profile, UnnamedProfile, LoginSession, Credential, NawssoConfig, NawssoResolvedConfig } from './interfaces'
 
 const AWS_PROFILES_FILE = join(homedir(), '.aws', 'config')
 const AWS_CREDENTIALS_FILE = process.env.AWS_SHARED_CREDENTIALS_FILE || join(homedir(), '.aws', 'credentials')
 const AWS_SSO_CACHE_DIR = join(homedir(), '.aws', 'sso', 'cache')
+
+function objectMap (obj: object, fn: (value: any) => any ): any {
+  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
+}
+
+async function loadJson<T> (path: string): Promise<T> {
+  const data = await readFile(path, { encoding: 'utf8', flag: 'r'})
+  return JSON.parse(data) as T
+}
 
 async function ensureAwsConfig (): Promise<void> {
   if (!existsSync(AWS_SSO_CACHE_DIR)) {
@@ -27,14 +36,14 @@ async function loadCredentials (): Promise<ParsedConfig<Credential>> {
   return parse(data) as ParsedConfig<Credential>
 }
 
-async function loadProfiles (): Promise<ParsedConfig<UnnamedProfile>> {
-  const data = await readFile(AWS_PROFILES_FILE, { encoding: 'utf8', flag: 'r'})
-  return parse(data) as ParsedConfig<UnnamedProfile>
-}
-
 async function saveCredentials (config: ParsedConfig<Credential>): Promise<void> {
   const data = encode(config, { whitespace: true })
   await writeFile(AWS_CREDENTIALS_FILE, data, { encoding: 'utf8', flag: 'w' })
+}
+
+async function loadProfiles (): Promise<ParsedConfig<UnnamedProfile>> {
+  const data = await readFile(AWS_PROFILES_FILE, { encoding: 'utf8', flag: 'r'})
+  return parse(data) as ParsedConfig<UnnamedProfile>
 }
 
 async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void> {
@@ -42,9 +51,20 @@ async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void
   await writeFile(AWS_PROFILES_FILE, data, { encoding: 'utf8', flag: 'w' })
 }
 
-async function loadJson<T> (path: string): Promise<T> {
-  const data = await readFile(path, { encoding: 'utf8', flag: 'r'})
-  return JSON.parse(data) as T
+async function loadNawssoConfig (): Promise<NawssoResolvedConfig> {
+  const data = await loadJson<NawssoConfig>('nawsso.config.json')
+  return {
+    sso: data.sso,
+    accounts: objectMap(data.accounts, x => {
+      const id = (typeof x === 'string' || x instanceof String) ? x as string : x.id
+      return {
+        id,
+        role: x.role ?? data.default_account?.role ?? (() => { throw new Error(`'role' property cannot be resovled for account with id '${id}' in nawsso.config.json`) })(),
+        region: x.region ?? data.default_account?.region ?? 'us-east-1',
+        output: x.output ?? data.default_account?.output ?? 'yaml'
+      }
+    })
+  }
 }
 
 async function createBackup (filename: string = AWS_CREDENTIALS_FILE): Promise<void> {
@@ -109,7 +129,7 @@ export {
   saveCredentials,
   loadProfiles,
   saveProfiles,
-  loadJson,
+  loadNawssoConfig,
   createBackup,
   isMatchingStartUrl,
   expirationToUTCDateTimeString,

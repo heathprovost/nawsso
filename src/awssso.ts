@@ -1,6 +1,6 @@
 import { SSOClient, GetRoleCredentialsCommand } from '@aws-sdk/client-sso'
-import { Profile, Profiles, LoginSession, RoleCredential, NawssoConfig } from './interfaces'
-import { ensureAwsConfig, login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString, loadJson, saveProfiles } from './utils'
+import { Profile, Profiles, LoginSession, RoleCredential } from './interfaces'
+import { ensureAwsConfig, login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString, saveProfiles, loadNawssoConfig } from './utils'
 
 class AwsSso {
   private readonly _profile: Profile
@@ -96,10 +96,11 @@ class AwsSso {
     let configModified = false
     const profiles: Profiles = {}
     await ensureAwsConfig()
-    const nawssoConfig = await loadJson<NawssoConfig>('nawsso.config.json')
+    const nawssoConfig = await loadNawssoConfig()
     const config = await loadProfiles()
-    for (const account of nawssoConfig.accounts) {
-      const profile = config[`profile ${account.name}`]
+    for (const name in nawssoConfig.accounts) {
+      const account = nawssoConfig.accounts[name]
+      const profile = config[`profile ${name}`]
       if (
         profile == null ||
         isMatchingStartUrl(profile.sso_start_url, nawssoConfig.sso.starturl) == false ||
@@ -110,7 +111,7 @@ class AwsSso {
         profile.output !== account.output
       ) {
         configModified = true
-        config[`profile ${account.name}`] = {
+        config[`profile ${name}`] = {
           sso_start_url: nawssoConfig.sso.starturl,
           sso_region: nawssoConfig.sso.region,
           sso_account_id: account.id,
@@ -119,10 +120,10 @@ class AwsSso {
           output: account.output
         }
       }
-      profileName = profileName ?? account.name
-      profiles[account.name] = {
-        name: account.name,
-        ...config[`profile ${account.name}`]
+      profileName = profileName ?? name
+      profiles[name] = {
+        name,
+        ...config[`profile ${name}`]
       }
     }
     if (!profileName) {

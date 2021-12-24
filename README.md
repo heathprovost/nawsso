@@ -106,38 +106,59 @@ even work if you have never run `aws configure` (i.e. you have no existing confi
 specified accounts are not configured in them).
 
 Nawsso will automatically load `nawsso.config.json` if it exists in the folder it is run in as long as you do
-no pass in a profile or starturl. Simply run `nawsso` (or you can force a new login using `nawsso --force`)
+no pass in a profile or starturl. Simply run `nawsso` (or you can force a new login using `nawsso --force`). This
+file should conform to the following interface.
 
-- Example nawsso.config.json (all fields are strings and are required)
+- NawssoConfig interface
+```typescript
+interface NawssoConfig {
+  sso: {
+    starturl: string
+    region: string
+  }
+  default_account?: {
+    role?: string
+    region?: string
+    output?: string
+  }
+  accounts: {
+    [key: string]: string | {
+      id: string
+      role?: string
+      region?: string
+      output?: string
+    }
+  }
+}
+```
+
+The optional `default_account` properties will be merged with each account as they are read and will provide 
+user definable default values if they are missing. The `accounts` property is a list of key value pairs where 
+value can either be a simple string (in which case it is the account id) or an object consisting of the required 
+property `id` and the optional properties `role`, `region`, and `output`. Role is defined as optional but
+if it is not supplied by either the `default_account` or `account` it will throw an erro. The default value of 
+region if not supplied is `us-east-1` and the default vaule of output is `yaml`.
+
+- Example nawsso.config.json
 ```json
 {
   "sso": {
     "starturl": "https://mycompany.awsapps.com/start#/",
     "region": "us-east-2"
   },
-  "accounts": [
-    {
-      "name": "profile-1",
-      "id": "111111111111",
-      "role": "RoleName",
-      "region": "us-east-1",
-      "output": "yaml"
-    },
-    {
-      "name": "profile-2",
-      "id": "222222222222",
-      "role": "RoleName",
-      "region": "us-east-1",
-      "output": "yaml"
-    },
-    {
-      "name": "profile-3",
+  "default_account": {
+    "role": "RoleName",
+    "region": "us-east-1",
+    "output": "yaml"
+  },
+  "accounts": {
+    "profile-1": "111111111111",
+    "profile-2": "222222222222",
+    "profile-3": {
       "id": "333333333333",
-      "role": "RoleName",
-      "region": "us-east-1",
-      "output": "yaml"
+      "output": "json"
     }
-  ]
+  }
 }
 ```
 

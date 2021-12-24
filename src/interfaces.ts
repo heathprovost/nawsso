@@ -31,8 +31,13 @@ interface Credential {
 }
 
 interface NawssoConfigAccount {
-  name: string
   id: string
+  role?: string
+  region?: string
+  output?: string
+}
+
+interface NawssoResolvedConfigAccount extends NawssoConfigAccount {
   role: string
   region: string
   output: string
@@ -43,9 +48,21 @@ interface NawssoConfig {
     starturl: string
     region: string
   }
-  accounts: NawssoConfigAccount[]
+  default_account?: {
+    role?: string
+    region?: string
+    output?: string
+  },
+  accounts: {
+    [key: string]: string | NawssoConfigAccount
+  }
 }
 
+interface NawssoResolvedConfig extends NawssoConfig {
+  accounts: {
+    [key: string]: NawssoResolvedConfigAccount
+  }
+}
 
 interface RoleCredential extends RoleCredentials {
   accessKeyId: string
@@ -71,5 +88,7 @@ export {
   RoleCredential,
   LoginSession,
   NawssoConfig,
-  NawssoConfigAccount
+  NawssoResolvedConfig,
+  NawssoConfigAccount,
+  NawssoResolvedConfigAccount
 }
