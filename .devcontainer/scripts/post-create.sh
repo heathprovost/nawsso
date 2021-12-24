@@ -16,7 +16,7 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 # install LTS version of node using nvm and setup .nmvrc file (.nvmrc is intentionally untracked in git, so only write if the user doesnt have one already)
-nvm install --lts
+nvm install --lts --latest-npm
 if [[ ! -e .nvmrc ]]; then
   echo "lts/*" > .nvmrc
 fi

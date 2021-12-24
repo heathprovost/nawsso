@@ -1,3 +1,4 @@
+import * as chalk from 'chalk'
 import { SSOClient, GetRoleCredentialsCommand } from '@aws-sdk/client-sso'
 import { Profile, Profiles, LoginSession, RoleCredential } from './interfaces'
 import { ensureAwsConfig, login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString, saveProfiles, loadNawssoConfig } from './utils'
@@ -176,18 +177,24 @@ class AwsSso {
     let count = 0
     for (const profileName in this._profiles) {
       const currentProfile = this._profiles[profileName]
-      const credentials = await this.getCredentials(currentProfile)
-      config[currentProfile.name] = {
-        aws_access_key_id: credentials.accessKeyId,
-        aws_secret_access_key: credentials.secretAccessKey,
-        aws_session_token: credentials.sessionToken,
-        aws_security_token: credentials.sessionToken,
-        aws_session_expiration: expirationToUTCDateTimeString(credentials.expiration)
+      try {
+        const credentials = await this.getCredentials(currentProfile)
+        config[currentProfile.name] = {
+          aws_access_key_id: credentials.accessKeyId,
+          aws_secret_access_key: credentials.secretAccessKey,
+          aws_session_token: credentials.sessionToken,
+          aws_security_token: credentials.sessionToken,
+          aws_session_expiration: expirationToUTCDateTimeString(credentials.expiration)
+        }
+        if (credentials.region != null) {
+          config[currentProfile.name].region = credentials.region
+        }
+        count++
+      } catch (e: any) {
+        if (log) {
+          log(`${chalk.red(e.name + ': ' + e.message)} for profile ${chalk.green(currentProfile.name)} (id: ${chalk.green(currentProfile.sso_account_id)}, role: ${chalk.green(currentProfile.sso_role_name)})`)
+        }
       }
-      if (credentials.region != null) {
-        config[currentProfile.name].region = credentials.region
-      }
-      count++
     }
     await createBackup()
     await saveCredentials(config)
