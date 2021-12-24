@@ -4,3 +4,5 @@
 /lib
 /node_modules
 /tmp
+.nvmrc
+nawsso.config.json

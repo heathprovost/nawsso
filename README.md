@@ -97,3 +97,53 @@ Note: The variable `NAWSSO_EXPIRES/expiration` is the datetime at which the sess
 It is encoded as the number of milliseconds since the Unix Epoch. This can optionally be used to perform 
 sanity checks to confirm that the token is still valid in whatever environment you use the credentials
 in.
+
+## nawsso.config.json
+
+You can optionally create a configuration file that will initialize nawsso with a list of accounts to
+synchronize and log into. This can be used to configure a collection of accounts in one step. It will 
+even work if you have never run `aws configure` (i.e. you have no existing configs or credentials or the
+specified accounts are not configured in them).
+
+Nawsso will automatically load `nawsso.config.json` if it exists in the folder it is run in as long as you do
+no pass in a profile or starturl. Simply run `nawsso` (or you can force a new login using `nawsso --force`)
+
+- Example nawsso.config.json (all fields are strings and are required)
+```json
+{
+  "sso": {
+    "starturl": "https://mycompany.awsapps.com/start#/",
+    "region": "us-east-2"
+  },
+  "accounts": [
+    {
+      "name": "profile-1",
+      "id": "111111111111",
+      "role": "RoleName",
+      "region": "us-east-1",
+      "output": "yaml"
+    },
+    {
+      "name": "profile-2",
+      "id": "222222222222",
+      "role": "RoleName",
+      "region": "us-east-1",
+      "output": "yaml"
+    },
+    {
+      "name": "profile-3",
+      "id": "333333333333",
+      "role": "RoleName",
+      "region": "us-east-1",
+      "output": "yaml"
+    }
+  ]
+}
+```
+
+Each time you run nawsso like this it will ensure that all the specified accounts are synchronized with your aws config. Changes you
+make in the aws config file to these profile will be overwritten if your run nawsso again.
+
+Note: When run this way nawsso will log into **only** the accounts specified in the config file, even if there are existing profiles
+in your aws config using the same sso starturl. If you want to log into all profiles using the same starturl in a folder containing 
+a nawsso.config.json, you must use the --starturl to do so.

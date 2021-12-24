@@ -4,14 +4,17 @@ interface ParsedConfig<T> {
   [key: string]: T
 }
 
-interface Profile {
-  name: string
+interface UnnamedProfile {
   output: string
   region?: string
   sso_account_id: string
   sso_region: string
   sso_role_name: string
   sso_start_url: string
+}
+
+interface Profile extends UnnamedProfile {
+  name: string
 }
 
 interface Profiles {
@@ -26,6 +29,23 @@ interface Credential {
   aws_security_token?: string
   aws_session_expiration?: string
 }
+
+interface NawssoConfigAccount {
+  name: string
+  id: string
+  role: string
+  region: string
+  output: string
+}
+
+interface NawssoConfig {
+  sso: {
+    starturl: string
+    region: string
+  }
+  accounts: NawssoConfigAccount[]
+}
+
 
 interface RoleCredential extends RoleCredentials {
   accessKeyId: string
@@ -44,9 +64,12 @@ interface LoginSession {
 
 export {
   ParsedConfig,
+  UnnamedProfile,
   Profile,
   Profiles,
   Credential,
   RoleCredential,
-  LoginSession
+  LoginSession,
+  NawssoConfig,
+  NawssoConfigAccount
 }

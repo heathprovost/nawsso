@@ -1,6 +1,6 @@
 import { SSOClient, GetRoleCredentialsCommand } from '@aws-sdk/client-sso'
-import { Profile, Profiles, LoginSession, RoleCredential } from './interfaces'
-import { login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString } from './utils'
+import { Profile, Profiles, LoginSession, RoleCredential, NawssoConfig } from './interfaces'
+import { ensureAwsConfig, login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString, loadJson, saveProfiles } from './utils'
 
 class AwsSso {
   private readonly _profile: Profile
@@ -18,62 +18,134 @@ class AwsSso {
     return new AwsSso(profile, profiles, session)
   }
 
-  public static async fromProfileNameOrStartUrl (profileNameOrStartUrl?: string, forceLogin: boolean = false): Promise<AwsSso> {
+  public static async fromStartUrl (startUrl: string, forceLogin: boolean = false): Promise<AwsSso> {
     let profileName: string | undefined
-    const isStartUrl = profileNameOrStartUrl?.startsWith('https://')
+    if (!startUrl.startsWith('https://')) {
+      throw new Error(`starturl must be a valid https url`)
+    }
     const profiles: Profiles = {}
     const config = await loadProfiles()
-    if (!profileNameOrStartUrl || isStartUrl) {
-      let startUrl = isStartUrl ? profileNameOrStartUrl : undefined
-      for (const profile in config) {
-        if (profile.startsWith('profile ')) {
-          if (config[profile].sso_start_url != null) {
-            if (!startUrl) {
-              startUrl = startUrl ?? config[profile].sso_start_url
+    for (const profile in config) {
+      if (profile.startsWith('profile ') && isMatchingStartUrl(startUrl, config[profile].sso_start_url)) {
+        profileName = profileName ?? profile.slice(8)
+        const currentProfile = profile.slice(8)
+        profiles[currentProfile] = {
+          name: currentProfile,
+          ...config[profile]
+        }
+      }
+    }
+    if (!profileName) {
+      throw new Error(`Could not find any profiles configured for ${startUrl}`)
+    }
+    const profile = profiles[profileName]
+    return AwsSso.fromResolvedProfiles(profile, profiles, forceLogin)
+  }
+
+  public static async fromAutoDetectedStartUrl (forceLogin: boolean = false): Promise<AwsSso> {
+    let startUrl
+    let profileName: string | undefined
+    const profiles: Profiles = {}
+    const config = await loadProfiles()
+    for (const profile in config) {
+      if (profile.startsWith('profile ')) {
+        if (config[profile].sso_start_url != null) {
+          startUrl = startUrl ?? config[profile].sso_start_url
+          if (isMatchingStartUrl(startUrl, config[profile].sso_start_url)) {
+            profileName = profileName ?? profile.slice(8)
+            const currentProfile = profile.slice(8)
+            profiles[currentProfile] = {
+              name: currentProfile,
+              ...config[profile]
             }
-            if (isMatchingStartUrl(startUrl, config[profile].sso_start_url)) {
-              profileName = profileName ?? profile.slice(8)
-              const currentProfile = profile.slice(8)
-              profiles[currentProfile] = config[profile]
-              profiles[currentProfile].name = currentProfile
-            } else if (!isStartUrl) {
-              profileName = undefined
-            }
+          } else {
+            throw new Error(`You must specificy a profile when multiple AWS SSO endpoints are configured`)
           }
         }
       }
-    } else {
-      profileName = profileNameOrStartUrl
     }
     if (!profileName) {
-      if (isStartUrl) {
-        throw new Error(`Could not find and profiles configured for ${profileNameOrStartUrl}`)
-      } else {
-        throw new Error('You must specificy a profile when multiple AWS SSO endpoints are configured')
-      }
-    }
-    if (!profiles[profileName]) {
-      profiles[profileName] = config[`profile ${profileName}`]
-      profiles[profileName].name = profileName
-    }
-    if (!profiles[profileName]) {
-      throw new Error(`No profile found for ${profileName}`)
+      throw new Error(`Could not find any configured SSO profiles`)
     }
     const profile = profiles[profileName]
-    profile.name = profileName
     return AwsSso.fromResolvedProfiles(profile, profiles, forceLogin)
   }
+
+  public static async fromProfileName (profileName: string, forceLogin: boolean = false): Promise<AwsSso> {
+    let theProfile: string | undefined
+    const profiles: Profiles = {}
+    const config = await loadProfiles()
+    for (const profile in config) {
+      if (profile.startsWith('profile ') && profile.slice(8) === profileName && config[profile].sso_start_url != null) {
+        theProfile = profileName
+        profiles[theProfile] = {
+          name: theProfile,
+          ...config[profile]
+        }
+      }
+    }
+    if (!theProfile) {
+      throw new Error(`No SSO configured profile found for ${profileName}`)
+    }
+    const profile = profiles[theProfile]
+    return AwsSso.fromResolvedProfiles(profile, profiles, forceLogin)
+  }
+
+  public static async fromNawssoConfig (forceLogin: boolean = false): Promise<AwsSso> {
+    let profileName: string | undefined
+    let configModified = false
+    const profiles: Profiles = {}
+    await ensureAwsConfig()
+    const nawssoConfig = await loadJson<NawssoConfig>('nawsso.config.json')
+    const config = await loadProfiles()
+    for (const account of nawssoConfig.accounts) {
+      const profile = config[`profile ${account.name}`]
+      if (
+        profile == null ||
+        isMatchingStartUrl(profile.sso_start_url, nawssoConfig.sso.starturl) == false ||
+        profile.sso_region !== nawssoConfig.sso.region ||
+        profile.sso_account_id !== account.id ||
+        profile.sso_role_name !== account.role ||
+        profile.region !== account.region ||
+        profile.output !== account.output
+      ) {
+        configModified = true
+        config[`profile ${account.name}`] = {
+          sso_start_url: nawssoConfig.sso.starturl,
+          sso_region: nawssoConfig.sso.region,
+          sso_account_id: account.id,
+          sso_role_name: account.role,
+          region: account.region,
+          output: account.output
+        }
+      }
+      profileName = profileName ?? account.name
+      profiles[account.name] = {
+        name: account.name,
+        ...config[`profile ${account.name}`]
+      }
+    }
+    if (!profileName) {
+      throw new Error(`Could not find any configured SSO profiles`)
+    }
+    const profile = profiles[profileName]
+    if (configModified) {
+      await saveProfiles(config)
+    }
+    return AwsSso.fromResolvedProfiles(profile, profiles, forceLogin)
+  }
+
 
   public get startUrl(): string {
     return this._profile.sso_start_url
   }
 
   public get profile(): string {
-    return this._profile.name
+    return this._profile.name!
   }
 
   public get profiles(): string[] {
-    return Object.keys(this._profiles).map(x => this._profiles[x].name)
+    return Object.keys(this._profiles).map(x => this._profiles[x].name!)
   }
 
   public async getCredentials (profile: Profile): Promise<RoleCredential> {
@@ -98,8 +170,9 @@ class AwsSso {
     return {...result.roleCredentials, region: profile.region} as RoleCredential
   }
 
-  public async updateCredentials (): Promise<void> {
+  public async updateCredentials (log?: (message?: string, ...args: any[]) => void): Promise<void> {
     const config = await loadCredentials()
+    let count = 0
     for (const profileName in this._profiles) {
       const currentProfile = this._profiles[profileName]
       const credentials = await this.getCredentials(currentProfile)
@@ -113,9 +186,17 @@ class AwsSso {
       if (credentials.region != null) {
         config[currentProfile.name].region = credentials.region
       }
+      count++
     }
     await createBackup()
     await saveCredentials(config)
+    if (log) {
+      if (count === 1) {
+        log(`Synchronized credentials for profile '${Object.keys(this._profiles)[0]}'`)
+      } else {
+        log(`Synchronized credentials for ${count} profile(s)`)
+      }
+    }
   }
   
   public async exportCredentials (format: string): Promise<string> {

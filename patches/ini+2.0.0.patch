@@ -1,8 +1,8 @@
 diff --git a/node_modules/ini/ini.js b/node_modules/ini/ini.js
-index 7d05a71..a9b3898 100644
+index 7d05a71..eeadfce 100644
 --- a/node_modules/ini/ini.js
 +++ b/node_modules/ini/ini.js
-@@ -150,7 +150,7 @@ const isQuoted = val =>
+@@ -150,13 +150,13 @@ const isQuoted = val =>
  
  const safe = val =>
    (typeof val !== 'string' ||
@@ -11,3 +11,10 @@ index 7d05a71..a9b3898 100644
      val.match(/^\[/) ||
      (val.length > 1 &&
       isQuoted(val)) ||
+     val !== val.trim())
+     ? JSON.stringify(val)
+-    : val.replace(/;/g, '\\;').replace(/#/g, '\\#')
++    : val.replace(/;/g, '\\;')
+ 
+ const unsafe = (val, doUnesc) => {
+   val = (val || '').trim()

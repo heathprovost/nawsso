@@ -1,5 +1,6 @@
 import {Command, flags} from '@oclif/command'
 import { AwsSso } from './awssso'
+import { existsSync } from 'fs'
 
 class NawSso extends Command {
   static description = 'Node AWS SSO Credentials Helper\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
@@ -30,16 +31,21 @@ class NawSso extends Command {
   }
 
   async run() {
+    let sso: AwsSso
     const {flags} = this.parse(NawSso)
-    const sso = await AwsSso.fromProfileNameOrStartUrl(flags.starturl ?? flags.profile, flags.force)
+    if (flags.profile != null) {
+      sso = await AwsSso.fromProfileName(flags.profile, flags.force)
+    } else if (flags.starturl != null) {
+      sso = await AwsSso.fromStartUrl(flags.starturl, flags.force)
+    } else if (existsSync('nawsso.config.json')) {
+      sso = await AwsSso.fromNawssoConfig(flags.force)
+    } else {
+      sso = await AwsSso.fromAutoDetectedStartUrl(flags.force)
+    }
     if (flags.export) {
       this.log(await sso.exportCredentials(flags.export))
-    } else if (flags.profile) {
-      await sso.updateCredentials()
-      this.log(`Synchronized credentials for profile '${flags.profile}'`)
     } else {
-      await sso.updateCredentials()
-      this.log(`Synchronized credentials for ${sso.profiles.length} profile(s)`)
+      await sso.updateCredentials(this.log.bind(this))
     }
   }
 }
