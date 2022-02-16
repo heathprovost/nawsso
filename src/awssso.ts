@@ -2,6 +2,7 @@ import * as chalk from 'chalk'
 import { SSOClient, GetRoleCredentialsCommand } from '@aws-sdk/client-sso'
 import { Profile, Profiles, LoginSession, RoleCredential } from './interfaces'
 import { ensureAwsConfig, login, loadCredentials, saveCredentials, loadProfiles, createBackup, isMatchingStartUrl, isExpired, expirationToUTCDateTimeString, saveProfiles, loadNawssoConfig } from './utils'
+import { existsSync } from 'fs'
 
 class AwsSso {
   private readonly _profile: Profile
@@ -92,12 +93,15 @@ class AwsSso {
     return AwsSso.fromResolvedProfiles(profile, profiles, forceLogin)
   }
 
-  public static async fromNawssoConfig (forceLogin: boolean = false): Promise<AwsSso> {
+  public static async fromNawssoConfig (path: string, forceLogin: boolean = false): Promise<AwsSso> {
+    if (!existsSync(path)) {
+      throw new Error(`Nawsso config file '${path}' does not exist.`)
+    }
     let profileName: string | undefined
     let configModified = false
     const profiles: Profiles = {}
     await ensureAwsConfig()
-    const nawssoConfig = await loadNawssoConfig()
+    const nawssoConfig = await loadNawssoConfig(path)
     const config = await loadProfiles()
     for (const name in nawssoConfig.accounts) {
       const account = nawssoConfig.accounts[name]

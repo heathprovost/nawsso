@@ -24,6 +24,11 @@ class NawSso extends Command {
       options: ['dotenv', 'json', 'shell'],
       description: 'Print out credentials in specified format'
     }),
+    config: flags.string({
+      char: 'c',
+      exclusive: ['starturl', 'profile', 'export'],
+      description: 'Load nawsso config file from path. Default is to load nawsso.config.json from cwd if exists.'
+    }),
     force: flags.boolean({
       char: 'f',
       description: 'Force login even when existing session is still valid'
@@ -37,8 +42,10 @@ class NawSso extends Command {
       sso = await AwsSso.fromProfileName(flags.profile, flags.force)
     } else if (flags.starturl != null) {
       sso = await AwsSso.fromStartUrl(flags.starturl, flags.force)
+    } else if (flags.config != null) {
+      sso = await AwsSso.fromNawssoConfig(flags.config, flags.force)
     } else if (existsSync('nawsso.config.json')) {
-      sso = await AwsSso.fromNawssoConfig(flags.force)
+      sso = await AwsSso.fromNawssoConfig('nawsso.config.json', flags.force)
     } else {
       sso = await AwsSso.fromAutoDetectedStartUrl(flags.force)
     }

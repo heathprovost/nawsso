@@ -106,8 +106,9 @@ even work if you have never run `aws configure` (i.e. you have no existing confi
 specified accounts are not configured in them).
 
 Nawsso will automatically load `nawsso.config.json` if it exists in the folder it is run in as long as you do
-no pass in a profile or starturl. Simply run `nawsso` (or you can force a new login using `nawsso --force`). This
-file should conform to the following interface.
+no pass in a profile or starturl. Simply run `nawsso` (or you can force a new login using `nawsso --force`). 
+You can also instruct nawsso to load from a specific config file by providing a path using the `--config` argument.
+The nawsso config file should conform to the following interface.
 
 - NawssoConfig interface
 ```typescript

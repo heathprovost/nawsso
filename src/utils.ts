@@ -51,8 +51,8 @@ async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void
   await writeFile(AWS_PROFILES_FILE, data, { encoding: 'utf8', flag: 'w' })
 }
 
-async function loadNawssoConfig (): Promise<NawssoResolvedConfig> {
-  const data = await loadJson<NawssoConfig>('nawsso.config.json')
+async function loadNawssoConfig (path: string): Promise<NawssoResolvedConfig> {
+  const data = await loadJson<NawssoConfig>(path)
   return {
     sso: data.sso,
     accounts: objectMap(data.accounts, x => {
