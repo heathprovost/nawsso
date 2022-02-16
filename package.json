@@ -7,7 +7,7 @@
   "repository": "github:heathprovost/nawsso",
   "license": "MIT",
   "engines": {
-    "node": ">=16"
+    "node": ">=14"
   },
   "bin": {
     "nawsso": "./bin/run"
