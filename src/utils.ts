@@ -34,23 +34,21 @@ async function loadJson<T> (path: string): Promise<T> {
 }
 
 async function ensureAwsConfig (): Promise<void> {
-  let HOME_DIR: string
-  if (isWsl() && process.argv[2]?.startsWith('/mnt/')) {
-    const winHome = (await spawn('wslvar', ['USERPROFILE'])).toString()
-    HOME_DIR = (await spawn('wslpath', [winHome])).toString()
-  } else {
-    HOME_DIR = homedir()
-  }
-  const awsSsoCacheDir = join(HOME_DIR, '.aws', 'sso', 'cache')
-  const awsCredentialsFile = join(HOME_DIR, '.aws', 'credentials')
-  const awsProfileFile = join(HOME_DIR, '.aws', 'config')
-  if (!existsSync(awsSsoCacheDir)) {
+  if (!existsSync(AWS_SSO_CACHE_DIR)) {
+    let HOME_DIR: string
+    if (isWsl() && process.argv[1]?.startsWith('/mnt/')) {
+      const winHome = (await spawn('wslvar', ['USERPROFILE'])).toString().trim()
+      HOME_DIR = (await spawn('wslpath', [winHome])).toString().trim()
+    } else {
+      HOME_DIR = homedir()
+    }
+    const awsSsoCacheDir = join(HOME_DIR, '.aws', 'sso', 'cache')      
     mkdirSync(awsSsoCacheDir, { recursive: true })
   }
-  if (!existsSync(awsCredentialsFile)) {
+  if (!existsSync(AWS_CREDENTIALS_FILE)) {
     await saveCredentials({})
   }
-  if (!existsSync(awsProfileFile)) {
+  if (!existsSync(AWS_PROFILES_FILE)) {
     await saveProfiles({})
   }
 }
