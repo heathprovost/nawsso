@@ -21,7 +21,7 @@ class NawSso extends Command {
     export: flags.string({
       char: 'e',
       dependsOn: ['profile'],
-      options: ['dotenv', 'json', 'shell'],
+      options: ['dotenv', 'json', 'shell', 'arguments'],
       description: 'Print out credentials in specified format'
     }),
     config: flags.string({
@@ -36,8 +36,11 @@ class NawSso extends Command {
   }
 
   async run() {
-    let sso: AwsSso
     const {flags} = this.parse(NawSso)
+    if (flags.help != null) {
+      return
+    }
+    let sso: AwsSso
     if (flags.profile != null) {
       sso = await AwsSso.fromProfileName(flags.profile, flags.force)
     } else if (flags.starturl != null) {

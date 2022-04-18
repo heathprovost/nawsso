@@ -222,11 +222,16 @@ class AwsSso {
         sessionToken: credentials.sessionToken
       }, null, 2)
     }
-    const prefix = format === 'shell' ? 'export ' : ''
-    const nawssoExpires = `${prefix}NAWSSO_EXPIRES=${credentials.expiration}\n`
-    const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}\n`
-    const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}\n`
-    const region = (credentials.region != null) ? `${prefix}AWS_REGION=${credentials.region}\n` : ''
+    const prefix = format === 'shell' 
+      ? 'export '
+      : ''
+    const suffix = format === 'arguments'
+      ? ' '
+      : '\n'    
+    const nawssoExpires = `${prefix}NAWSSO_EXPIRES=${credentials.expiration}${suffix}`
+    const key = `${prefix}AWS_ACCESS_KEY_ID=${credentials.accessKeyId}${suffix}`
+    const secret = `${prefix}AWS_SECRET_ACCESS_KEY=${credentials.secretAccessKey}${suffix}`
+    const region = (credentials.region != null) ? `${prefix}AWS_REGION=${credentials.region}${suffix}` : ''
     const token = `${prefix}AWS_SESSION_TOKEN=${credentials.sessionToken}`
     return nawssoExpires + key + secret + region + token
   }
