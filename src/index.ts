@@ -27,7 +27,7 @@ class NawSso extends Command {
     config: flags.string({
       char: 'c',
       exclusive: ['starturl', 'profile', 'export'],
-      description: 'Load a config file from path. Default is to load nawsso.config.json from cwd.'
+      description: 'Load a config file from path. Default loads nawsso.config.json from cwd.'
     }),
     force: flags.boolean({
       char: 'f',
