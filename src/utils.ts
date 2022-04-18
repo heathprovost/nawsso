@@ -1,17 +1,48 @@
-import { homedir } from 'os'
+import { release, homedir } from 'os'
 import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync } from 'fs'
 import { readFile, writeFile, copyFile, readdir } from 'fs/promises'
 import * as spawn from 'await-spawn'
 import { parse, encode } from 'ini'
 import { ParsedConfig, Profile, UnnamedProfile, LoginSession, Credential, NawssoConfig, NawssoResolvedConfig } from './interfaces'
 
-const AWS_PROFILES_FILE = join(homedir(), '.aws', 'config')
-const AWS_CREDENTIALS_FILE = process.env.AWS_SHARED_CREDENTIALS_FILE || join(homedir(), '.aws', 'credentials')
-const AWS_SSO_CACHE_DIR = join(homedir(), '.aws', 'sso', 'cache')
+let HOME_DIR: string
+
+enum DotAwsPath {
+  ProfileFile,
+  CredentialsFile,
+  SsoCacheDir
+}
 
 function objectMap (obj: object, fn: (value: any) => any ): any {
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, fn(v)]))
+}
+
+function isWsl (): boolean {
+  try {
+    if (process.platform !== 'linux') {
+      return false
+    }  
+    if (release().toLowerCase().includes('microsoft')) {
+      return true
+    }
+    return readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
+  } catch (_) {
+    return false
+  }
+}
+
+async function getDotAwsPath (id: DotAwsPath ): Promise<string> {
+  if (HOME_DIR == null) {
+    HOME_DIR = (isWsl() && process.argv[2]?.startsWith('/mnt/'))
+    ? (await spawn('wslpath', ['$(wslvar USERPROFILE)'])).toString()
+    : homedir()
+  }
+  switch (id) {
+    case DotAwsPath.ProfileFile: return join(HOME_DIR, '.aws', 'config')
+    case DotAwsPath.CredentialsFile: return process.env.AWS_SHARED_CREDENTIALS_FILE || join(HOME_DIR, '.aws', 'credentials')
+    case DotAwsPath.SsoCacheDir: return join(HOME_DIR, '.aws', 'sso', 'cache')
+  }
 }
 
 async function loadJson<T> (path: string): Promise<T> {
@@ -20,6 +51,9 @@ async function loadJson<T> (path: string): Promise<T> {
 }
 
 async function ensureAwsConfig (): Promise<void> {
+  const AWS_SSO_CACHE_DIR = await getDotAwsPath(DotAwsPath.SsoCacheDir)
+  const AWS_CREDENTIALS_FILE = await getDotAwsPath(DotAwsPath.CredentialsFile)
+  const AWS_PROFILES_FILE = await getDotAwsPath(DotAwsPath.ProfileFile)
   if (!existsSync(AWS_SSO_CACHE_DIR)) {
     mkdirSync(AWS_SSO_CACHE_DIR, { recursive: true })
   }
@@ -32,21 +66,25 @@ async function ensureAwsConfig (): Promise<void> {
 }
 
 async function loadCredentials (): Promise<ParsedConfig<Credential>> {
+  const AWS_CREDENTIALS_FILE = await getDotAwsPath(DotAwsPath.CredentialsFile)
   const data = await readFile(AWS_CREDENTIALS_FILE, { encoding: 'utf8', flag: 'r'})
   return parse(data) as ParsedConfig<Credential>
 }
 
 async function saveCredentials (config: ParsedConfig<Credential>): Promise<void> {
+  const AWS_CREDENTIALS_FILE = await getDotAwsPath(DotAwsPath.CredentialsFile)
   const data = encode(config, { whitespace: true })
   await writeFile(AWS_CREDENTIALS_FILE, data, { encoding: 'utf8', flag: 'w' })
 }
 
 async function loadProfiles (): Promise<ParsedConfig<UnnamedProfile>> {
+  const AWS_PROFILES_FILE = await getDotAwsPath(DotAwsPath.ProfileFile)
   const data = await readFile(AWS_PROFILES_FILE, { encoding: 'utf8', flag: 'r'})
   return parse(data) as ParsedConfig<UnnamedProfile>
 }
 
 async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void> {
+  const AWS_PROFILES_FILE = await getDotAwsPath(DotAwsPath.ProfileFile)
   const data = encode(config, { whitespace: true })
   await writeFile(AWS_PROFILES_FILE, data, { encoding: 'utf8', flag: 'w' })
 }
@@ -67,7 +105,8 @@ async function loadNawssoConfig (path: string): Promise<NawssoResolvedConfig> {
   }
 }
 
-async function createBackup (filename: string = AWS_CREDENTIALS_FILE): Promise<void> {
+async function createBackup (filename?: string): Promise<void> {
+  filename = filename ?? await getDotAwsPath(DotAwsPath.ProfileFile)
   const firstRunBackupPath = `${filename}.nawsso-firstrun.backup`
   const backupPath = `${filename}.nawsso.backup`
   if (existsSync(filename)) {
@@ -104,6 +143,7 @@ function isCredential (data: Profile | UnnamedProfile | LoginSession | unknown):
 }
 
 async function login (profile: Profile, forceLogin: boolean = false): Promise<LoginSession> {
+  const AWS_SSO_CACHE_DIR = await getDotAwsPath(DotAwsPath.SsoCacheDir)
   let files = (await readdir(AWS_SSO_CACHE_DIR)).map(x => join(AWS_SSO_CACHE_DIR, x))
   if (forceLogin || files.length === 0) {
     await spawn('aws', ['sso', 'login', '--profile', profile.name], {stdio: [process.stdin, process.stdout]})
