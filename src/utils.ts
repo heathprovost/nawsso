@@ -34,9 +34,12 @@ function isWsl (): boolean {
 
 async function getDotAwsPath (id: DotAwsPath ): Promise<string> {
   if (HOME_DIR == null) {
-    HOME_DIR = (isWsl() && process.argv[2]?.startsWith('/mnt/'))
-    ? (await spawn('wslpath', ['$(wslvar USERPROFILE)'])).toString()
-    : homedir()
+    if (isWsl() && process.argv[2]?.startsWith('/mnt/')) {
+      const winHome = (await spawn('wslvar', ['USERPROFILE'])).toString()
+      HOME_DIR = (await spawn('wslpath', [winHome])).toString()
+    } else {
+      HOME_DIR = homedir()
+    }
   }
   switch (id) {
     case DotAwsPath.ProfileFile: return join(HOME_DIR, '.aws', 'config')
