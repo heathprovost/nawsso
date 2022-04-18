@@ -54,8 +54,19 @@ async function ensureAwsConfig (): Promise<void> {
 }
 
 async function loadCredentials (): Promise<ParsedConfig<Credential>> {
-  const data = await readFile(AWS_CREDENTIALS_FILE, { encoding: 'utf8', flag: 'r'})
-  return parse(data) as ParsedConfig<Credential>
+  try {
+    const data = await readFile(AWS_CREDENTIALS_FILE, { encoding: 'utf8', flag: 'r'})
+    return parse(data) as ParsedConfig<Credential>  
+  }
+  catch (e: unknown) {
+    const isNodeError = (error: unknown, code?: string): error is NodeJS.ErrnoException =>
+      error instanceof Error && (code == null || (error as NodeJS.ErrnoException).code == code)
+    if (isNodeError(e, 'ENOENT')) {
+      throw new Error(`AWS credentials file '${AWS_CREDENTIALS_FILE}' does not exist. Try running 'aws configure' to create it.`)
+    } else {
+      throw e
+    }
+  }
 }
 
 async function saveCredentials (config: ParsedConfig<Credential>): Promise<void> {
@@ -64,8 +75,19 @@ async function saveCredentials (config: ParsedConfig<Credential>): Promise<void>
 }
 
 async function loadProfiles (): Promise<ParsedConfig<UnnamedProfile>> {
-  const data = await readFile(AWS_PROFILES_FILE, { encoding: 'utf8', flag: 'r'})
-  return parse(data) as ParsedConfig<UnnamedProfile>
+  try {
+    const data = await readFile(AWS_PROFILES_FILE, { encoding: 'utf8', flag: 'r'})
+    return parse(data) as ParsedConfig<UnnamedProfile>
+  }
+  catch (e: unknown) {
+    const isNodeError = (error: unknown, code?: string): error is NodeJS.ErrnoException =>
+      error instanceof Error && (code == null || (error as NodeJS.ErrnoException).code == code)
+    if (isNodeError(e, 'ENOENT')) {
+      throw new Error(`AWS config file '${AWS_PROFILES_FILE}' does not exist. Try running 'aws configure sso' to create your first profile.`)
+    } else {
+      throw e
+    }
+  }
 }
 
 async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void> {

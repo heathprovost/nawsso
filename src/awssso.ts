@@ -48,6 +48,7 @@ class AwsSso {
     let startUrl
     let profileName: string | undefined
     const profiles: Profiles = {}
+    await ensureAwsConfig()
     const config = await loadProfiles()
     for (const profile in config) {
       if (profile.startsWith('profile ')) {
