@@ -1,0 +1,47 @@
+diff --git a/node_modules/ini/lib/ini.js b/node_modules/ini/lib/ini.js
+index d05682b..2568153 100644
+--- a/node_modules/ini/lib/ini.js
++++ b/node_modules/ini/lib/ini.js
+@@ -72,7 +72,7 @@ const decode = str => {
+   const lines = str.split(/[\r\n]+/g)
+ 
+   for (const line of lines) {
+-    if (!line || line.match(/^\s*[;#]/)) {
++    if (!line || line.match(/^\s*[;]/)) {
+       continue
+     }
+     const match = line.match(re)
+@@ -167,14 +167,14 @@ const isQuoted = val => {
+ const safe = val => {
+   if (
+     typeof val !== 'string' ||
+-    val.match(/[=\r\n]/) ||
++    val.match(/[\r\n]/) ||
+     val.match(/^\[/) ||
+     (val.length > 1 && isQuoted(val)) ||
+     val !== val.trim()
+   ) {
+     return JSON.stringify(val)
+   }
+-  return val.split(';').join('\\;').split('#').join('\\#')
++  return val.split(';').join('\\;')
+ }
+ 
+ const unsafe = (val, doUnesc) => {
+@@ -196,14 +196,14 @@ const unsafe = (val, doUnesc) => {
+     for (let i = 0, l = val.length; i < l; i++) {
+       const c = val.charAt(i)
+       if (esc) {
+-        if ('\\;#'.indexOf(c) !== -1) {
++        if ('\\;'.indexOf(c) !== -1) {
+           unesc += c
+         } else {
+           unesc += '\\' + c
+         }
+ 
+         esc = false
+-      } else if (';#'.indexOf(c) !== -1) {
++      } else if (';'.indexOf(c) !== -1) {
+         break
+       } else if (c === '\\') {
+         esc = true

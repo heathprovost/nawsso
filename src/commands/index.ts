@@ -1,45 +1,42 @@
-import {Command, flags} from '@oclif/command'
-import { AwsSso } from './awssso'
+import { Command, Flags } from '@oclif/core'
+import { AwsSso } from '../lib/awssso'
 import { existsSync } from 'fs'
 
-class NawSso extends Command {
-  static description = 'Node AWS SSO Credentials Helper\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
+export default class NawSso extends Command {
+  static description = 'Node AWS SSO Credentials Helper v1.7.0\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
   static flags = {
-    help: flags.help({
+    help: Flags.help({
       char: 'h'
     }),
-    starturl: flags.string({
+    starturl: Flags.string({
       char: 's',
       exclusive: ['profile'],
       description: 'Start URL. Required when more than one AWS SSO endpoint is configured'
     }),
-    profile: flags.string({
+    profile: Flags.string({
       char: 'p',
       exclusive: ['starturl'],
       description: 'Login profile name. Default behavior is to sync all SSO profiles'
     }),
-    export: flags.string({
+    export: Flags.string({
       char: 'e',
       dependsOn: ['profile'],
       options: ['dotenv', 'json', 'shell', 'arguments'],
       description: 'Print out credentials in specified format'
     }),
-    config: flags.string({
+    config: Flags.string({
       char: 'c',
       exclusive: ['starturl', 'profile', 'export'],
       description: 'Load a config file from path. Default loads nawsso.config.json from cwd.'
     }),
-    force: flags.boolean({
+    force: Flags.boolean({
       char: 'f',
       description: 'Force login even when existing session is still valid'
-    }),
+    })
   }
 
-  async run() {
-    const {flags} = this.parse(NawSso)
-    if (flags.help != null) {
-      return
-    }
+  async run (): Promise<void> {
+    const { flags } = await this.parse(NawSso)
     let sso: AwsSso
     if (flags.profile != null) {
       sso = await AwsSso.fromProfileName(flags.profile, flags.force)
@@ -52,12 +49,10 @@ class NawSso extends Command {
     } else {
       sso = await AwsSso.fromAutoDetectedStartUrl(flags.force)
     }
-    if (flags.export) {
+    if (flags.export != null) {
       this.log(await sso.exportCredentials(flags.export))
     } else {
       await sso.updateCredentials(this.log.bind(this))
     }
   }
 }
-
-export = NawSso
