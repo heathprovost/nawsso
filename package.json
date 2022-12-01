@@ -1,6 +1,6 @@
 {
   "name": "@heathprovost/nawsso",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "Node AWS SSO Credentials Helper",
   "author": "Heath Provost <galvanash@gmail.com>",
   "bin": {
@@ -13,6 +13,7 @@
   "files": [
     "/bin",
     "/dist",
+    "/patches",
     "/npm-shrinkwrap.json",
     "/oclif.manifest.json"
   ],
