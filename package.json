@@ -1,6 +1,6 @@
 {
   "name": "@heathprovost/nawsso",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Node AWS SSO Credentials Helper",
   "author": "Heath Provost <galvanash@gmail.com>",
   "bin": {
@@ -26,6 +26,7 @@
     "bl": "^6.0.0",
     "chalk": "^4.1.2",
     "ini": "^3.0.1",
+    "patch-package": "^6.5.0",
     "puppeteer": "^19.3.0"
   },
   "devDependencies": {
@@ -45,7 +46,6 @@
     "eslint-plugin-promise": "^6.1.1",
     "mocha": "^9",
     "oclif": "^3",
-    "patch-package": "^6.5.0",
     "shx": "^0.3.3",
     "ts-node": "^10.9.1",
     "tslib": "^2.4.1",

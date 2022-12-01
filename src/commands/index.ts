@@ -3,7 +3,7 @@ import { AwsSso } from '../lib/awssso'
 import { existsSync } from 'fs'
 
 export default class NawSso extends Command {
-  static description = 'Node AWS SSO Credentials Helper v1.7.0\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
+  static description = 'Node AWS SSO Credentials Helper v1.7.1\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
   static flags = {
     help: Flags.help({
       char: 'h'
