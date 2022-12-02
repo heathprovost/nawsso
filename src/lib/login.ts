@@ -87,7 +87,7 @@ async function login (startUrl: string, region: string, forceLogin: boolean = fa
   const registration = await registerClient(oidc, 'nawsso')
   const authorization = await authorizeDevice(oidc, registration, startUrl)
   process.stdout.write(`Opening the SSO authorization page in bundled browser.\nIf the browser does not open or you wish to use a different device to authorize this request, open the following URL:\n\n${authorization.verificationUri}\n\nThen enter the code:\n\n${authorization.userCode}\n`)
-  await open(authorization.verificationUriComplete, '/start/user-consent/login-success.html')
+  await open(authorization.verificationUriComplete, /^.*start\/user-consent\/login-success\.html$/)
   process.stdout.write(`Successfully logged into Start URL: ${startUrl}\n`)
   const token = await createToken(oidc, authorization, registration)
   session = {

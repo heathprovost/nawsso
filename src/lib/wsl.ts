@@ -3,18 +3,18 @@ import { join } from 'path'
 import { readFileSync } from 'fs'
 import { execSync } from 'child_process'
 
-let IS_WSL: boolean = false
+let IN_WSL2: boolean = false
+let FROM_WSL2: boolean = false
 let HOME_DIR: string
 let TEMP_DIR: string
 
 try {
-  IS_WSL = (
-    (process.platform === 'linux' && release().toLowerCase().includes('microsoft')) ||
-    (readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft') && process.argv[1]?.startsWith('/mnt/'))
-  )
+  IN_WSL2 = (process.platform === 'linux' && release().toLowerCase().includes('microsoft')) ||
+            readFileSync('/proc/version', 'utf8').toLowerCase().includes('microsoft')
+  FROM_WSL2 = IN_WSL2 && process.argv[1]?.startsWith('/mnt/')
 } catch (_) { }
 
-if (IS_WSL) {
+if (FROM_WSL2) {
   const winhome = execSync('wslvar USERPROFILE').toString().trim()
   const wslhome = execSync(`wslpath ${winhome}`).toString().trim()
   HOME_DIR = wslhome
@@ -24,8 +24,14 @@ if (IS_WSL) {
   TEMP_DIR = nodeTmpDir()
 }
 
-function isWsl (): boolean {
-  return IS_WSL
+function platform (): string {
+  if (FROM_WSL2) {
+    return 'win32-wsl2'
+  } else if (IN_WSL2) {
+    return 'linux-wsl2'
+  } else {
+    return process.platform
+  }
 }
 
 function homedir (): string {
@@ -37,7 +43,7 @@ function tmpdir (): string {
 }
 
 export {
-  isWsl,
+  platform,
   homedir,
   tmpdir
 }
