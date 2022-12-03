@@ -1,11 +1,17 @@
-import { join } from 'path'
 import { existsSync, mkdirSync } from 'fs'
-import { readFile, writeFile, copyFile } from 'fs/promises'
+import { join } from 'path'
+import { readFile, writeFile, readdir, copyFile } from 'fs/promises'
 import { parse, encode } from 'ini'
-import { homedir } from './wsl'
+import { useWinHome, homedir } from './wsl'
+import { isExpired } from './datetime'
+import { spawn } from './await-spawn'
 
 interface ParsedConfig<T> {
   [key: string]: T
+}
+
+interface Profile extends UnnamedProfile {
+  name: string
 }
 
 interface UnnamedProfile {
@@ -26,21 +32,28 @@ interface Credential {
   aws_session_expiration?: string
 }
 
-const AWS_PROFILES_FILE = join(homedir(), '.aws', 'config')
-const AWS_CREDENTIALS_FILE = process.env.AWS_SHARED_CREDENTIALS_FILE ?? join(homedir(), '.aws', 'credentials')
-const AWS_SSO_CACHE_DIR = join(homedir(), '.aws', 'sso', 'cache')
+interface LoginSession {
+  startUrl: string
+  region: string
+  accessToken: string
+  expiresAt: string
+  clientId: string
+  clientSecret: string
+  registrationExpiresAt: string
+}
 
-async function ensureAwsConfig (): Promise<void> {
-  if (!existsSync(AWS_SSO_CACHE_DIR)) {
-    const awsSsoCacheDir = join(homedir(), '.aws', 'sso', 'cache')
-    mkdirSync(awsSsoCacheDir, { recursive: true })
-  }
-  if (!existsSync(AWS_CREDENTIALS_FILE)) {
-    await saveCredentials({})
-  }
-  if (!existsSync(AWS_PROFILES_FILE)) {
-    await saveProfiles({})
-  }
+const AWS_DIR = join(homedir(), '.aws')
+const AWS_PROFILES_FILE = join(AWS_DIR, 'config')
+const AWS_CREDENTIALS_FILE = process.env.AWS_SHARED_CREDENTIALS_FILE ?? join(AWS_DIR, 'credentials')
+const AWS_SSO_CACHE_DIR = join(AWS_DIR, 'sso', 'cache')
+
+async function loadJson<T> (path: string): Promise<T> {
+  const data = await readFile(path, { encoding: 'utf8', flag: 'r' })
+  return JSON.parse(data) as T
+}
+
+function isCredential (data: Profile | UnnamedProfile | LoginSession | unknown): data is LoginSession {
+  return (data as LoginSession)?.accessToken != null && (data as LoginSession).expiresAt != null
 }
 
 async function loadCredentials (): Promise<ParsedConfig<Credential>> {
@@ -51,7 +64,7 @@ async function loadCredentials (): Promise<ParsedConfig<Credential>> {
     const isNodeError = (error: unknown, code?: string): error is NodeJS.ErrnoException =>
       error instanceof Error && (code == null || (error as NodeJS.ErrnoException).code === code)
     if (isNodeError(e, 'ENOENT')) {
-      throw new Error(`AWS credentials file '${AWS_CREDENTIALS_FILE}' does not exist. Try running 'aws configure' to create it.`)
+      return {}
     } else {
       throw e
     }
@@ -71,7 +84,10 @@ async function loadProfiles (): Promise<ParsedConfig<UnnamedProfile>> {
     const isNodeError = (error: unknown, code?: string): error is NodeJS.ErrnoException =>
       error instanceof Error && (code == null || (error as NodeJS.ErrnoException).code === code)
     if (isNodeError(e, 'ENOENT')) {
-      throw new Error(`AWS config file '${AWS_PROFILES_FILE}' does not exist. Try running 'aws configure sso' to create your first profile.`)
+      if (!existsSync(AWS_DIR)) {
+        mkdirSync(AWS_DIR)
+      }
+      return {}
     } else {
       throw e
     }
@@ -84,23 +100,55 @@ async function saveProfiles (config: ParsedConfig<UnnamedProfile>): Promise<void
 }
 
 async function createBackup (filename: string = AWS_CREDENTIALS_FILE): Promise<void> {
-  const firstRunBackupPath = `${filename}.nawsso-firstrun.backup`
   const backupPath = `${filename}.nawsso.backup`
-  if (existsSync(filename)) {
-    if (existsSync(firstRunBackupPath)) {
-      await copyFile(filename, backupPath)
-    } else {
-      await copyFile(filename, firstRunBackupPath)
+  try {
+    await copyFile(filename, backupPath)
+  } catch (e: unknown) {
+    const isNodeError = (error: unknown, code?: string): error is NodeJS.ErrnoException =>
+      error instanceof Error && (code == null || (error as NodeJS.ErrnoException).code === code)
+    if (!isNodeError(e, 'ENOENT')) {
+      throw e
     }
   }
 }
 
+async function getCachedLoginSession (profile: Profile): Promise<LoginSession | undefined> {
+  let files: string[] = []
+  try {
+    files = (await readdir(AWS_SSO_CACHE_DIR)).map(x => join(AWS_SSO_CACHE_DIR, x))
+    files = files.filter(x => !x.includes('botocore-client'))
+  } catch (_e) {}
+  if (files.length === 0) return undefined
+  for (const file of files) {
+    const data = await loadJson<unknown>(file)
+    if (
+      isCredential(data) &&
+      data.startUrl === profile.sso_start_url
+    ) {
+      return isExpired(data.expiresAt)
+        ? undefined
+        : data
+    }
+  }
+}
+
+async function login (profile: Profile, forceLogin: boolean = false): Promise<LoginSession> {
+  let session = await getCachedLoginSession(profile)
+  if (!forceLogin && session != null) return session
+  const awsBin = useWinHome() ? 'aws.exe' : 'aws'
+  await spawn(awsBin, ['sso', 'login', '--profile', profile.name], { stdio: [process.stdin, process.stdout] })
+  session = await getCachedLoginSession(profile)
+  if (session != null) return session
+  throw new Error('Unknown error occurred during login, try running `aws sso login` manually and try again')
+}
+
 export {
-  ensureAwsConfig,
   loadCredentials,
   saveCredentials,
   loadProfiles,
   saveProfiles,
   createBackup,
-  UnnamedProfile
+  login,
+  Profile,
+  LoginSession
 }

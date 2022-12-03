@@ -1,27 +1,11 @@
 import * as chalk from 'chalk'
-import { existsSync } from 'fs'
 import { SSOClient, GetRoleCredentialsCommand, RoleCredentials } from '@aws-sdk/client-sso'
 import { loadNawssoConfig } from './nawssoconfig'
-import { isExpired, expirationToUTCString } from './datetime'
-import { ensureAwsConfig, loadCredentials, saveCredentials, loadProfiles, saveProfiles, createBackup, UnnamedProfile } from './awscli'
-import { login } from './login'
-
-interface Profile extends UnnamedProfile {
-  name: string
-}
+import { expirationToUTCString } from './datetime'
+import { loadCredentials, saveCredentials, loadProfiles, saveProfiles, createBackup, login, Profile, LoginSession } from './awscli'
 
 interface Profiles {
   [key: string]: Profile
-}
-
-interface LoginSession {
-  startUrl: string
-  region: string
-  accessToken: string
-  expiresAt: string
-  clientId: string
-  clientSecret: string
-  registrationExpiresAt: string
 }
 
 interface RoleCredential extends RoleCredentials {
@@ -32,10 +16,10 @@ interface RoleCredential extends RoleCredentials {
   region: string
 }
 
-class AwsSso {
+export default class AwsSso {
   private readonly _profile: Profile
   private readonly _profiles: Profiles
-  private _session: LoginSession
+  private readonly _session: LoginSession
 
   constructor (profile: Profile, profiles: Profiles, session: LoginSession) {
     this._profile = profile
@@ -44,7 +28,7 @@ class AwsSso {
   }
 
   public static async fromResolvedProfiles (profile: Profile, profiles: Profiles, forceLogin: boolean = false): Promise<AwsSso> {
-    const session = await login(profile.sso_start_url, profile.sso_region, forceLogin)
+    const session = await login(profile, forceLogin)
     return new AwsSso(profile, profiles, session)
   }
 
@@ -76,7 +60,6 @@ class AwsSso {
     let startUrl
     let profileName: string | undefined
     const profiles: Profiles = {}
-    await ensureAwsConfig()
     const config = await loadProfiles()
     for (const profile in config) {
       if (profile.startsWith('profile ')) {
@@ -123,13 +106,9 @@ class AwsSso {
   }
 
   public static async fromNawssoConfig (path: string, forceLogin: boolean = false): Promise<AwsSso> {
-    if (!existsSync(path)) {
-      throw new Error(`Nawsso config file '${path}' does not exist.`)
-    }
     let profileName: string | undefined
     let configModified = false
     const profiles: Profiles = {}
-    await ensureAwsConfig()
     const nawssoConfig = await loadNawssoConfig(path)
     const config = await loadProfiles()
     for (const name in nawssoConfig.accounts) {
@@ -183,14 +162,6 @@ class AwsSso {
   }
 
   public async getCredentials (profile: Profile): Promise<RoleCredential> {
-    if (
-      this._session == null ||
-      this._session.startUrl !== profile.sso_start_url ||
-      this._session.region !== profile.sso_region ||
-      isExpired(this._session.expiresAt)
-    ) {
-      this._session = await login(this._profile.sso_start_url, this._profile.sso_region, false)
-    }
     const sso = new SSOClient({ region: profile.sso_region })
     const cmd = new GetRoleCredentialsCommand({
       accessToken: this._session.accessToken,

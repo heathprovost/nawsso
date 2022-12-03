@@ -1,9 +1,8 @@
 import { Command, Flags } from '@oclif/core'
-import { AwsSso } from '../lib/awssso'
 import { existsSync } from 'fs'
 
 export default class NawSso extends Command {
-  static description = 'Node AWS SSO Credentials Helper v1.7.4\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
+  static description = 'Node AWS SSO Credentials Helper v1.8.3\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
   static flags = {
     help: Flags.help({
       char: 'h'
@@ -32,12 +31,18 @@ export default class NawSso extends Command {
     force: Flags.boolean({
       char: 'f',
       description: 'Force login even when existing session is still valid'
+    }),
+    winhome: Flags.boolean({
+      char: 'w',
+      description: 'Use windows home directory when run in Windows Subsystem for Linux.'
     })
   }
 
   async run (): Promise<void> {
     const { flags } = await this.parse(NawSso)
-    let sso: AwsSso
+    process.env.NAWSSO_USE_WINHOME_IN_WSL = flags.winhome ? 'true' : 'false'
+    const { AwsSso } = await import('../lib/awssso')
+    let sso: any
     if (flags.profile != null) {
       sso = await AwsSso.fromProfileName(flags.profile, flags.force)
     } else if (flags.starturl != null) {
