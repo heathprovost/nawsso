@@ -1,46 +1,48 @@
-import {Command, flags} from '@oclif/command'
-import { AwsSso } from './awssso'
+import { Command, Flags } from '@oclif/core'
 import { existsSync } from 'fs'
 
-class NawSso extends Command {
-  static description = 'Node AWS SSO Credentials Helper\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
+export default class NawSso extends Command {
+  static description = 'Node AWS SSO Credentials Helper v1.8.3\nSync up AWS CLI v2 SSO login session to legacy CLI v1 credentials.'
   static flags = {
-    help: flags.help({
+    help: Flags.help({
       char: 'h'
     }),
-    starturl: flags.string({
+    starturl: Flags.string({
       char: 's',
       exclusive: ['profile'],
       description: 'Start URL. Required when more than one AWS SSO endpoint is configured'
     }),
-    profile: flags.string({
+    profile: Flags.string({
       char: 'p',
       exclusive: ['starturl'],
       description: 'Login profile name. Default behavior is to sync all SSO profiles'
     }),
-    export: flags.string({
+    export: Flags.string({
       char: 'e',
       dependsOn: ['profile'],
       options: ['dotenv', 'json', 'shell', 'arguments'],
       description: 'Print out credentials in specified format'
     }),
-    config: flags.string({
+    config: Flags.string({
       char: 'c',
       exclusive: ['starturl', 'profile', 'export'],
       description: 'Load a config file from path. Default loads nawsso.config.json from cwd.'
     }),
-    force: flags.boolean({
+    force: Flags.boolean({
       char: 'f',
       description: 'Force login even when existing session is still valid'
     }),
+    winhome: Flags.boolean({
+      char: 'w',
+      description: 'Use windows home directory when run in Windows Subsystem for Linux.'
+    })
   }
 
-  async run() {
-    const {flags} = this.parse(NawSso)
-    if (flags.help != null) {
-      return
-    }
-    let sso: AwsSso
+  async run (): Promise<void> {
+    const { flags } = await this.parse(NawSso)
+    process.env.NAWSSO_USE_WINHOME_IN_WSL = flags.winhome ? 'true' : 'false'
+    const { AwsSso } = await import('../lib/awssso')
+    let sso: any
     if (flags.profile != null) {
       sso = await AwsSso.fromProfileName(flags.profile, flags.force)
     } else if (flags.starturl != null) {
@@ -52,12 +54,10 @@ class NawSso extends Command {
     } else {
       sso = await AwsSso.fromAutoDetectedStartUrl(flags.force)
     }
-    if (flags.export) {
+    if (flags.export != null) {
       this.log(await sso.exportCredentials(flags.export))
     } else {
       await sso.updateCredentials(this.log.bind(this))
     }
   }
 }
-
-export = NawSso

@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-const command = require('../lib')
-const flush = require('@oclif/command/flush')
-const handle = require('@oclif/errors/handle')
+const oclif = require('@oclif/core')
 
-command.run().then(flush).catch(handle)
+oclif.run().then(oclif.flush).catch(oclif.Errors.handle)

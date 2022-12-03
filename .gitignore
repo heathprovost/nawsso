@@ -1,8 +1,11 @@
-*-debug.log
-*-error.log
-.oclif.manifest.json
-/lib
 /node_modules
-/tmp
+/dist
+oclif.manifest.json
+
+# IDE - VSCode
+.vscode/*
+!.vscode/launch.json
+
+# dev specific
 .nvmrc
 nawsso.config.json
