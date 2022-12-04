@@ -55,9 +55,10 @@ Synchronized credentials for 5 profile(s)
 Generally Nawsso will work fine in WSL2 as long as you always do one of the following:
 
 1. Always install both Nawsso and AWS-CLI in both windows **and** WSL2. If you also use something like nvm in either
-   environment then you should install Nawsso globally in **all** of your node versions.  
-2. Install Nawsso and AWS-CLI in windows **only**. While it will run slightly slower due to WSL2 file access being slow
-   across platform boundaries, it should work reliably.
+   environment then you should install Nawsso globally in **all** of your node versions. You can optionally 
+   [symlink your .aws folder](#sharing-profiles-and-credentials) if you want logins to presist across environments.  
+2. Install Nawsso and AWS-CLI in windows **only** and [symlink your .aws folder](#sharing-profiles-and-credentials). 
+   While it will run slightly slower due to WSL2 file access being slow across platform boundaries, it should work reliably.
 
 Note: If you want to override the default behavior, you can force Nawsso to use your windows `.aws` profiles and credentials
 when run from inside of WSL2 by adding the `--winhome` flag when running it.
