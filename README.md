@@ -50,6 +50,48 @@ Successully logged into Start URL: https://myendpoint.awsapps.com/start#/
 Synchronized credentials for 5 profile(s)
 ```
 
+## Windows Subsystem for Linux (WSL2)
+
+Generally Nawsso will work fine in WSL2 as long as you always do one of the following:
+
+1. Always install both Nawsso and AWS-CLI in both windows **and** WSL2. If you also use something like nvm in either
+   environment then you should install Nawsso globally in **all** of your node versions.  
+2. Install Nawsso and AWS-CLI in windows **only**. While it will run slightly slower due to WSL2 file access being slow
+   across platform boundaries, it should work reliably.
+
+Note: If you want to override the default behavior, you can force Nawsso to use your windows `.aws` profiles and credentials
+when run from inside of WSL2 by adding the `--winhome` flag when running it.
+
+### Sharing Profiles and Credentials 
+
+By default the Windows and WSL2 environments are treated independently and thus logging into a profile in one has no effect
+on the other. You can optionally bind the two environments together by creating a symlink in your WSL2 home directory to
+the `.aws` folder in your Windows home directory. In fact some tools, such as 
+[Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) will do this **automatically** when they are installed.
+When this symlink exists running Nawsso in either environment will update your session in both of them.
+
+### Why?
+
+Nawsso should work on Windows, Linux, and MacOS out of box with no special requirements. However, users who use the 
+[Windows Subsystem for Linux](https://learn.microsoft.com/en-us/windows/wsl/install) (WSL2) on Windows Platforms may
+occasionally require special handling because of the cross-platform capabilities that WSL2 provides. 
+
+It is possible to run the windows version of Nawsso from the WSL environment since WSL searchs your windows path for 
+executables and will run it unless it is **also** installed on Node in WSL2. This can get particulary complicated if 
+the AWS CLI is not installed on the same platform as Nawsso, it can actully end up launching the AWS CLI installed by
+the *other environment*. Things can get **even more** convoluted if you also use node version managers like 
+[nvm](https://github.com/nvm-sh/nvm) or [nvm for windows](https://github.com/coreybutler/nvm-windows) because behavior
+may depend on which version of node is active in each environment at any given time...
+
+Regardless, when run on windows the user's `.aws` directory (usually `C:\Users\username\.aws`) is where your profiles and 
+credentials are stored and where Nawsso expects to find them. When run in WSL2 this path is usually `/home/username/.aws`.
+Which path should be used depends on which AWS-CLI gets run. By default Nawsso will **always** run the AWS-CLI installed
+in WSL2 and thus will use the WSL2 paths to find profiles and credentials. 
+
+The special `--winhome` flag overrides this default behavior. When this flag is set and the program detects it is being
+run on WSL2, it will instead force the use of both the windows paths to `.aws` as well as the windows version of AWS-CLI.
+It basically acts like it was run in Windows instead of WSL2.
+
 ## Exporting Credentials
 
 Sometimes instead of syncing your credentials you need to capture them to be used elsewhere. You can use the `export`
