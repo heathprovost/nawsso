@@ -1,4 +1,4 @@
-import * as chalk from 'chalk'
+import chalk from 'chalk'
 import { SSOClient, GetRoleCredentialsCommand, RoleCredentials } from '@aws-sdk/client-sso'
 import { loadNawssoConfig } from './nawssoconfig'
 import { expirationToUTCString } from './datetime'

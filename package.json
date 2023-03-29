@@ -1,6 +1,6 @@
 {
   "name": "@heathprovost/nawsso",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "Node AWS SSO Credentials Helper",
   "author": "Heath Provost <galvanash@gmail.com>",
   "bin": {
